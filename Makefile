@@ -14,6 +14,8 @@ POSTGRES_DATABASE=film_library
 
 DB_URL="postgresql://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DATABASE)?sslmode=disable"
 
+MIGRATIONS_PATH=migrations/
+
 docker.run: docker.build
 	docker compose -f cmd/filmlibrary/docker-compose.yaml up -d
 
