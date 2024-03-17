@@ -15,8 +15,8 @@ type FilmService interface {
 	Create(title FilmTitle, description FilmDescription, releaseDate FilmReleaseDate, rating FilmRating, actorIds []ActorId) (*Film, error)
 	Update(id FilmId, title *FilmTitle, description *FilmDescription, releaseDate *FilmReleaseDate, rating *FilmRating) (*Film, error)
 	Delete(id FilmId) error
-	ListWithSort(title *FilmTitle, releaseDate *FilmReleaseDate, rating *FilmRating, limit, offset int) ([]*Film, error)
-	SearchByFilters(title FilmTitle, actorName ActorName) ([]*Film, error)
+	ListWithSort(titleOrder, releaseDateOrder, ratingOrder string, limit, offset int) ([]*Film, error)
+	SearchByFilters(title FilmTitle, actorName ActorName, limit, offset int) ([]*Film, error)
 }
 
 type filmServiceImpl struct {
@@ -129,7 +129,7 @@ func (f *filmServiceImpl) Delete(id FilmId) error {
 	return nil
 }
 
-func (f *filmServiceImpl) ListWithSort(title *FilmTitle, releaseDate *FilmReleaseDate, rating *FilmRating, limit, offset int) ([]*Film, error) {
+func (f *filmServiceImpl) ListWithSort(titleOrder, releaseDateOrder, ratingOrder string, limit, offset int) ([]*Film, error) {
 	const operation = "ListWithSort"
 
 	log := f.logger.With(
@@ -140,7 +140,7 @@ func (f *filmServiceImpl) ListWithSort(title *FilmTitle, releaseDate *FilmReleas
 
 	log.Info("listing films")
 
-	domainFilms, err := f.filmStorage.ListWithSort(title, releaseDate, rating, limit, offset)
+	domainFilms, err := f.filmStorage.ListWithSort(titleOrder, releaseDateOrder, ratingOrder, limit, offset)
 	if err != nil {
 		log.Error("failed to list films", "error", err)
 		return nil, err
@@ -151,7 +151,7 @@ func (f *filmServiceImpl) ListWithSort(title *FilmTitle, releaseDate *FilmReleas
 	return domainFilms, nil
 }
 
-func (f *filmServiceImpl) SearchByFilters(title FilmTitle, actorName ActorName) ([]*Film, error) {
+func (f *filmServiceImpl) SearchByFilters(title FilmTitle, actorName ActorName, limit, offset int) ([]*Film, error) {
 	const operation = "SearchByFilters"
 
 	log := f.logger.With(
@@ -162,7 +162,7 @@ func (f *filmServiceImpl) SearchByFilters(title FilmTitle, actorName ActorName) 
 
 	log.Info("searching films")
 
-	domainFilms, err := f.filmStorage.SearchByFilters(title, actorName)
+	domainFilms, err := f.filmStorage.SearchByFilters(title, actorName, limit, offset)
 	if err != nil {
 		log.Error("failed to search films", "error", err)
 		return nil, err

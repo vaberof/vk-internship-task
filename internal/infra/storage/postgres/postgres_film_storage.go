@@ -7,7 +7,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/vaberof/vk-internship-task/internal/domain"
 	"github.com/vaberof/vk-internship-task/internal/infra/storage"
+	"log"
 	"strings"
+	"time"
 )
 
 type PgFilmStorage struct {
@@ -42,7 +44,7 @@ func (s *PgFilmStorage) Create(title domain.FilmTitle, description domain.FilmDe
 					rating
 `
 
-	row := tx.QueryRow(query, title, description, releaseDate, rating)
+	row := tx.QueryRow(query, title, description, releaseDate.Time(), rating)
 	if err = row.Scan(
 		&film.Id,
 		&film.Title,
@@ -64,6 +66,12 @@ func (s *PgFilmStorage) Create(title domain.FilmTitle, description domain.FilmDe
 			return nil, fmt.Errorf("failed to create a film: failed to insert values to 'films_actors' table %w", err)
 		}
 	}
+
+	filmActors, err := s.getFilmActors(tx, film.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update a film: %w", err)
+	}
+	film.Actors = filmActors
 
 	if err = tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction while creating film: %w", err)
@@ -91,7 +99,7 @@ func (s *PgFilmStorage) Update(id domain.FilmId, title *domain.FilmTitle, descri
 						SET title=COALESCE($1, title),
 							description=COALESCE($2, description),
 							release_date=COALESCE($3, release_date),
-							rating=COALSECE($4, rating)
+							rating=COALESCE($4, rating)
 					 	WHERE id=$5
 			RETURNING
 			    id, 
@@ -101,7 +109,13 @@ func (s *PgFilmStorage) Update(id domain.FilmId, title *domain.FilmTitle, descri
 				rating
 `
 
-	row := tx.QueryRow(query, title, description, releaseDate, rating, id)
+	var convReleaseDate *time.Time
+	if releaseDate != nil {
+		convDomainReleaseDate := releaseDate.Time()
+		convReleaseDate = &convDomainReleaseDate
+	}
+
+	row := tx.QueryRow(query, title, description, convReleaseDate, rating, id)
 	if err = row.Scan(
 		&film.Id,
 		&film.Title,
@@ -114,6 +128,12 @@ func (s *PgFilmStorage) Update(id domain.FilmId, title *domain.FilmTitle, descri
 		}
 		return nil, fmt.Errorf("failed to update a film: %w", err)
 	}
+
+	filmActors, err := s.getFilmActors(tx, film.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update a film: %w", err)
+	}
+	film.Actors = filmActors
 
 	if err = tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction while updating film: %w", err)
@@ -134,9 +154,9 @@ func (s *PgFilmStorage) Delete(id domain.FilmId) error {
 	return nil
 }
 
-func (s *PgFilmStorage) ListWithSort(title *domain.FilmTitle, releaseDate *domain.FilmReleaseDate, rating *domain.FilmRating, limit, offset int) ([]*domain.Film, error) {
+func (s *PgFilmStorage) ListWithSort(titleOrder, releaseDateOrder, ratingOrder string, limit, offset int) ([]*domain.Film, error) {
 	limitOffsetParams := fmt.Sprintf(" LIMIT %d OFFSET %d ", limit, offset)
-	orderParam := s.buildOrderParam(title, releaseDate, rating)
+	orderParam := s.buildOrderParam(titleOrder, releaseDateOrder, ratingOrder)
 
 	query := `
 			SELECT f.id,
@@ -148,11 +168,12 @@ func (s *PgFilmStorage) ListWithSort(title *domain.FilmTitle, releaseDate *domai
 			       a.name,
 			       a.sex,
 			       a.birthdate
-			FROM films AS f
-			JOIN films_actors AS fa ON f.id = fa.film_id
-			JOIN actors AS a ON a.id = fa.actor_id
-` + orderParam + limitOffsetParams
+			FROM (SELECT * FROM films AS f` + orderParam + limitOffsetParams + `) AS f
+			INNER JOIN films_actors AS fa ON f.id = fa.film_id
+			INNER JOIN actors AS a ON a.id = fa.actor_id
+` + orderParam
 
+	log.Println("query:", query)
 	var films []*PgFilm
 
 	rows, err := s.db.Query(query)
@@ -196,7 +217,9 @@ func (s *PgFilmStorage) ListWithSort(title *domain.FilmTitle, releaseDate *domai
 	return buildDomainFilms(films), nil
 }
 
-func (s *PgFilmStorage) SearchByFilters(title domain.FilmTitle, actorName domain.ActorName) ([]*domain.Film, error) {
+func (s *PgFilmStorage) SearchByFilters(title domain.FilmTitle, actorName domain.ActorName, limit, offset int) ([]*domain.Film, error) {
+	limitOffsetParams := fmt.Sprintf(" LIMIT %d OFFSET %d ", limit, offset)
+
 	query := `
 			SELECT f.id,
 			       f.title,
@@ -207,10 +230,16 @@ func (s *PgFilmStorage) SearchByFilters(title domain.FilmTitle, actorName domain
 			       a.name,
 			       a.sex,
 			       a.birthdate
-			FROM films AS f
-			JOIN films_actors AS fa ON f.id = fa.film_id
-			JOIN actors AS a ON a.id = fa.actor_id
-			WHERE f.title LIKE '%' || $1 || '%' AND a.name LIKE '%' || $2 || '%'
+			FROM (SELECT * FROM films AS f 
+			               WHERE f.id IN(
+			               SELECT f.id
+			               FROM films as f
+			                   INNER JOIN films_actors AS fa ON f.id = fa.film_id
+			                   INNER JOIN actors AS a ON a.id = fa.actor_id
+			               WHERE f.title LIKE '%' || $1 || '%' AND a.name LIKE '%' || $2 || '%')` +
+		limitOffsetParams + `) AS f
+			    INNER JOIN films_actors AS fa ON f.id = fa.film_id
+			    INNER JOIN actors AS a ON a.id = fa.actor_id
 `
 
 	var films []*PgFilm
@@ -272,19 +301,56 @@ func (s *PgFilmStorage) IsExists(id domain.FilmId) (bool, error) {
 	return true, nil
 }
 
-func (s *PgFilmStorage) buildOrderParam(title *domain.FilmTitle, releaseDate *domain.FilmReleaseDate, rating *domain.FilmRating) string {
+func (s *PgFilmStorage) getFilmActors(tx *sql.Tx, filmId int64) ([]*PgActor, error) {
+	queryActors := `
+		SELECT a.id,
+		       a.name,
+		       a.sex,
+		       a.birthdate
+		       FROM actors AS a
+		INNER JOIN films_actors AS fa ON a.id = fa.actor_id
+		WHERE fa.film_id=$1
+`
+
+	rows, err := tx.Query(queryActors, filmId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get film actors: %w", err)
+	}
+	defer rows.Close()
+
+	var filmActors []*PgActor
+
+	for rows.Next() {
+		var actor PgActor
+
+		if err = rows.Scan(
+			&actor.Id,
+			&actor.Name,
+			&actor.Sex,
+			&actor.BirthDate,
+		); err != nil {
+			return nil, fmt.Errorf("failed to get film actors: %w", err)
+		}
+
+		filmActors = append(filmActors, &actor)
+	}
+
+	return filmActors, nil
+}
+
+func (s *PgFilmStorage) buildOrderParam(titleOrder, releaseDateOrder, ratingOrder string) string {
 	orderParam := " ORDER BY "
 
 	var orderByClauses []string
 
-	if title != nil {
-		orderByClauses = append(orderByClauses, "f.title")
+	if titleOrder != "" {
+		orderByClauses = append(orderByClauses, fmt.Sprintf("f.title %s", titleOrder))
 	}
-	if releaseDate != nil {
-		orderByClauses = append(orderByClauses, "f.release_date")
+	if releaseDateOrder != "" {
+		orderByClauses = append(orderByClauses, fmt.Sprintf("f.release_date %s", releaseDateOrder))
 	}
-	if rating != nil {
-		orderByClauses = append(orderByClauses, "f.rating DESC")
+	if ratingOrder != "" {
+		orderByClauses = append(orderByClauses, fmt.Sprintf("f.rating %s", ratingOrder))
 	}
 
 	if len(orderByClauses) > 0 {
@@ -297,7 +363,7 @@ func (s *PgFilmStorage) buildOrderParam(title *domain.FilmTitle, releaseDate *do
 }
 
 func buildDomainFilms(postgresFilms []*PgFilm) []*domain.Film {
-	domainFilms := make([]*domain.Film, 0, len(postgresFilms))
+	domainFilms := make([]*domain.Film, len(postgresFilms))
 	for i := range postgresFilms {
 		domainFilms[i] = buildDomainFilm(postgresFilms[i])
 	}

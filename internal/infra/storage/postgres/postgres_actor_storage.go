@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	"github.com/vaberof/vk-internship-task/internal/domain"
 	"github.com/vaberof/vk-internship-task/internal/infra/storage"
-	"strconv"
-	"strings"
+	"time"
 )
 
 type PgActorStorage struct {
@@ -30,9 +30,10 @@ func (s *PgActorStorage) Create(name domain.ActorName, sex domain.ActorSex, birt
 				RETURNING 
 					id, 
 					name,
-					sex, birthdate
+					sex, 
+				    birthdate
 `
-	row := s.db.QueryRow(query, name, sex, birthDate)
+	row := s.db.QueryRow(query, name, sex, birthDate.Time())
 	if err := row.Scan(
 		&actor.Id,
 		&actor.Name,
@@ -71,7 +72,13 @@ func (s *PgActorStorage) Update(id domain.ActorId, name *domain.ActorName, sex *
 			birthdate
 `
 
-	row := tx.QueryRow(query, name, sex, birthDate, id)
+	var convBirthdate *time.Time
+	if birthDate != nil {
+		convDomainBirthdate := birthDate.Time()
+		convBirthdate = &convDomainBirthdate
+	}
+
+	row := tx.QueryRow(query, name, sex, convBirthdate, id)
 
 	if err = row.Scan(
 		&actor.Id,
@@ -83,6 +90,39 @@ func (s *PgActorStorage) Update(id domain.ActorId, name *domain.ActorName, sex *
 			return nil, fmt.Errorf("failed to update actor in database: %w", storage.ErrActorNotFound)
 		}
 		return nil, fmt.Errorf("failed to update actor in database: %w", err)
+	}
+
+	queryFilms := `
+		SELECT f.id,
+		       f.title,
+		       f.description,
+		       f.release_date,
+		       f.rating
+		       FROM films AS f
+		INNER JOIN films_actors AS fa ON f.id = fa.film_id
+		WHERE fa.actor_id=$1
+`
+
+	rows, err := tx.Query(queryFilms, actor.Id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update actor: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var film PgFilm
+
+		if err = rows.Scan(
+			&film.Id,
+			&film.Title,
+			&film.Description,
+			&film.ReleaseDate,
+			&film.Rating,
+		); err != nil {
+			return nil, fmt.Errorf("failed to create a film: %w", err)
+		}
+
+		actor.Films = append(actor.Films, &film)
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -117,10 +157,10 @@ func (s *PgActorStorage) List(limit, offset int) ([]*domain.Actor, error) {
 			       f.description,
 			       f.release_date,
 			       f.rating
-		    FROM actors AS a
+		    FROM (SELECT * FROM actors` + limitOffsetParams + `) AS a
 		    INNER JOIN films_actors AS fa ON a.id = fa.actor_id
 		    INNER JOIN films AS f ON f.id = fa.film_id
-			` + limitOffsetParams
+`
 
 	var actors []*PgActor
 
@@ -184,18 +224,12 @@ func (s *PgActorStorage) IsExists(id domain.ActorId) (bool, error) {
 func (s *PgActorStorage) AreExists(ids []domain.ActorId) (bool, error) {
 	query := `
 			SELECT COUNT(*) FROM actors 
-			WHERE id IN ($1)
+			WHERE id=ANY($1)
 `
-	strIds := make([]string, len(ids))
-	for i := range ids {
-		strIds[i] = strconv.Itoa(int(ids[i].Int64()))
-	}
-
-	strIdsWithComma := strings.Join(strIds, ",")
 
 	var idsCount int64
 
-	err := s.db.QueryRow(query, strIdsWithComma).Scan(&idsCount)
+	err := s.db.QueryRow(query, pq.Array(ids)).Scan(&idsCount)
 	if err != nil {
 		return false, fmt.Errorf("failed to check whether actors exists or not: %w", err)
 	}
@@ -221,5 +255,6 @@ func buildDomainActor(postgresActor *PgActor) *domain.Actor {
 		Name:      domain.ActorName(postgresActor.Name),
 		Sex:       domain.ActorSex(postgresActor.Sex),
 		BirthDate: domain.ActorBirthDate(postgresActor.BirthDate),
+		Films:     buildDomainFilms(postgresActor.Films),
 	}
 }

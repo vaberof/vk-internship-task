@@ -5,11 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jmoiron/sqlx"
+	"github.com/vaberof/vk-internship-task/internal/infra/storage"
 	"github.com/vaberof/vk-internship-task/internal/service/user"
-)
-
-var (
-	ErrUserNotFound = errors.New("user not found")
 )
 
 type PgUserStorage struct {
@@ -38,7 +35,7 @@ func (s *PgUserStorage) FindByEmail(email string) (*user.User, error) {
 		&user.Role,
 	); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("failed to find user by email: %w", ErrUserNotFound)
+			return nil, fmt.Errorf("failed to find user by email: %w", storage.ErrUserNotFound)
 		}
 		return nil, fmt.Errorf("failed to find user by email: %w", err)
 	}
@@ -50,6 +47,6 @@ func buildUser(postgresUser *PgUser) *user.User {
 		Id:       postgresUser.Id,
 		Email:    postgresUser.Email,
 		Password: postgresUser.Password,
-		Role:     postgresUser.Role,
+		Role:     user.UserRole(postgresUser.Role),
 	}
 }

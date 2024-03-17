@@ -18,7 +18,7 @@ type Response struct {
 }
 
 type ErrorResponsePayload struct {
-	Code    int            `json:"code"`
+	Code    string         `json:"code"`
 	Message string         `json:"message"`
 	Details map[string]any `json:"details"`
 }
@@ -30,7 +30,7 @@ func Success(payload json.RawMessage) *Response {
 	}
 }
 
-func Error(code int, message string, details ErrorDescription) *Response {
+func Error(code string, message string, details ErrorDescription) *Response {
 	payload, _ := json.Marshal(&ErrorResponsePayload{
 		Code:    code,
 		Message: message,

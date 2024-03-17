@@ -13,7 +13,7 @@ var (
 )
 
 type AuthService interface {
-	AuthenticateUser(email, password string) error
+	AuthenticateUser(email, password string) (*user.User, error)
 }
 
 type authServiceImpl struct {
@@ -30,7 +30,7 @@ func NewAuthService(userFinder UserFinder, logsBuilder *logs.Logs) AuthService {
 	}
 }
 
-func (a *authServiceImpl) AuthenticateUser(email, password string) error {
+func (a *authServiceImpl) AuthenticateUser(email, password string) (*user.User, error) {
 	const operation = "AuthenticateUser"
 
 	log := a.logger.With(
@@ -43,19 +43,19 @@ func (a *authServiceImpl) AuthenticateUser(email, password string) error {
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			log.Error("failed to authenticate a user", "error", user.ErrUserNotFound)
-			return ErrInvalidEmailOrPassword
+			return nil, ErrInvalidEmailOrPassword
 		}
 
 		log.Error("failed to authenticate a user", "error", err)
-		return err
+		return nil, err
 	}
 
 	if err = xpassword.Check(password, usr.Password); err != nil {
 		log.Error("failed to authenticate a user", "error", err)
-		return ErrInvalidEmailOrPassword
+		return nil, ErrInvalidEmailOrPassword
 	}
 
 	log.Info("user has authenticated")
 
-	return nil
+	return usr, nil
 }
