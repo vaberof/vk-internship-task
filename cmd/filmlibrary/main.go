@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
+	_ "github.com/vaberof/vk-internship-task/cmd/filmlibrary/docs"
 	"github.com/vaberof/vk-internship-task/internal/app/entrypoint/http"
 	"github.com/vaberof/vk-internship-task/internal/domain"
 	pgstorage "github.com/vaberof/vk-internship-task/internal/infra/storage/postgres"
@@ -24,6 +25,14 @@ import (
 var appConfigPaths = flag.String("config.files", "not-found.yaml", "List of application config files separated by comma")
 var environmentVariablesPath = flag.String("env.vars.file", "not-found.env", "Path to environment variables file")
 
+//	@title			Film Library API
+//	@version		1.0
+//	@description	API Server for Film Library Application
+
+//	@host		localhost:8000
+//	@BasePath	/api/v1
+
+//	@securityDefinitions.basic	BasicAuth
 func main() {
 	flag.Parse()
 	if err := loadEnvironmentVariables(); err != nil {

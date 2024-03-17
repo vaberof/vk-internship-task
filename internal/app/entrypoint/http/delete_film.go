@@ -15,9 +15,30 @@ type deleteFilmResponseBody struct {
 	Message string `json:"message"`
 }
 
+//	@Summary		Delete a film by path parameter 'id'
+//	@Security		BasicAuth
+//	@Tags			films
+//	@Description	Delete a film by path parameter 'id'
+//	@ID				delete-film
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		integer	true	"Film`s id that needs to be deleted"
+//	@Success		200	{object}	deleteFilmResponseBody
+//	@Failure		400	{object}	apiv1.Response
+//	@Failure		401	{object}	apiv1.Response
+//	@Failure		403	{object}	apiv1.Response
+//	@Failure		404	{object}	apiv1.Response
+//	@Failure		500	{object}	apiv1.Response
+//	@Router			/films/{id} [delete]
 func (h *Handler) DeleteFilmHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
 		filmIdPathParam := request.PathValue("id")
+		if filmIdPathParam == "" {
+			views.RenderJSON(rw, http.StatusBadRequest, apiv1.Error(apiv1.CodeBadRequest, ErrMessageFilmInvalidRequestBody, apiv1.ErrorDescription{"error": "missing required path parameter 'id'"}))
+
+			return
+		}
+
 		filmId, err := strconv.Atoi(filmIdPathParam)
 		if err != nil {
 			views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageFilmInternalServerError, apiv1.ErrorDescription{"error": err.Error()}))

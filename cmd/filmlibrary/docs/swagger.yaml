@@ -1,0 +1,645 @@
+basePath: /api/v1
+definitions:
+  github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response:
+    properties:
+      payload:
+        items:
+          type: integer
+        type: array
+      status:
+        type: string
+    type: object
+  internal_app_entrypoint_http.actor:
+    properties:
+      birthdate:
+        type: string
+      films:
+        items:
+          $ref: '#/definitions/internal_app_entrypoint_http.actorFilm'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      sex:
+        type: integer
+    type: object
+  internal_app_entrypoint_http.actorFilm:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      rating:
+        type: integer
+      release_date:
+        type: string
+      title:
+        type: string
+    type: object
+  internal_app_entrypoint_http.createActorRequestBody:
+    properties:
+      birthdate:
+        example: "2006-01-02"
+        type: string
+      name:
+        maxLength: 100
+        type: string
+      sex:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 9
+        type: integer
+    required:
+    - birthdate
+    - name
+    - sex
+    type: object
+  internal_app_entrypoint_http.createActorResponseBody:
+    properties:
+      birthdate:
+        type: string
+      films:
+        items:
+          $ref: '#/definitions/internal_app_entrypoint_http.actorFilm'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      sex:
+        type: integer
+    type: object
+  internal_app_entrypoint_http.createFilmRequestBody:
+    type: object
+  internal_app_entrypoint_http.createFilmResponseBody:
+    properties:
+      actors:
+        items:
+          $ref: '#/definitions/internal_app_entrypoint_http.filmActor'
+        type: array
+      description:
+        type: string
+      id:
+        type: integer
+      rating:
+        type: integer
+      release_date:
+        type: string
+      title:
+        type: string
+    type: object
+  internal_app_entrypoint_http.deleteActorResponseBody:
+    properties:
+      message:
+        type: string
+    type: object
+  internal_app_entrypoint_http.deleteFilmResponseBody:
+    properties:
+      message:
+        type: string
+    type: object
+  internal_app_entrypoint_http.film:
+    properties:
+      actors:
+        items:
+          $ref: '#/definitions/internal_app_entrypoint_http.filmActor'
+        type: array
+      description:
+        type: string
+      id:
+        type: integer
+      rating:
+        type: integer
+      release_date:
+        type: string
+      title:
+        type: string
+    type: object
+  internal_app_entrypoint_http.filmActor:
+    properties:
+      birthdate:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      sex:
+        type: integer
+    type: object
+  internal_app_entrypoint_http.listActorsResponseBody:
+    properties:
+      actors:
+        items:
+          $ref: '#/definitions/internal_app_entrypoint_http.actor'
+        type: array
+    type: object
+  internal_app_entrypoint_http.listFilmsResponseBody:
+    properties:
+      films:
+        items:
+          $ref: '#/definitions/internal_app_entrypoint_http.film'
+        type: array
+    type: object
+  internal_app_entrypoint_http.searchFilmsResponseBody:
+    properties:
+      films:
+        items:
+          $ref: '#/definitions/internal_app_entrypoint_http.film'
+        type: array
+    type: object
+  internal_app_entrypoint_http.updateActorRequestBody:
+    properties:
+      birthdate:
+        example: "2006-01-02"
+        type: string
+      name:
+        maxLength: 100
+        type: string
+      sex:
+        enum:
+        - 0
+        - 1
+        - 2
+        - 9
+        type: integer
+    type: object
+  internal_app_entrypoint_http.updateActorResponseBody:
+    properties:
+      birthdate:
+        type: string
+      films:
+        items:
+          $ref: '#/definitions/internal_app_entrypoint_http.actorFilm'
+        type: array
+      id:
+        type: integer
+      name:
+        type: string
+      sex:
+        type: integer
+    type: object
+  internal_app_entrypoint_http.updateFilmRequestBody:
+    properties:
+      description:
+        maxLength: 1000
+        type: string
+      rating:
+        maximum: 10
+        minimum: 0
+        type: integer
+      release_date:
+        type: string
+      title:
+        maxLength: 150
+        minLength: 1
+        type: string
+    type: object
+  internal_app_entrypoint_http.updateFilmResponseBody:
+    properties:
+      actors:
+        items:
+          $ref: '#/definitions/internal_app_entrypoint_http.filmActor'
+        type: array
+      description:
+        type: string
+      id:
+        type: integer
+      rating:
+        type: integer
+      release_date:
+        type: string
+      title:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: API Server for Film Library Application
+  title: Film Library API
+  version: "1.0"
+paths:
+  /actors:
+    get:
+      description: List all actors with optional query parameters 'limit' and 'offset'
+      operationId: list-actors
+      parameters:
+      - description: An optional query parameter 'limit' that limits total number
+          of returned actors. By default 'limit' = 100
+        in: query
+        name: limit
+        type: integer
+      - description: An optional query parameter 'offset' that indicates how many
+          records should be skipped while listing actors. By default 'offset' = 0
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_app_entrypoint_http.listActorsResponseBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+      security:
+      - BasicAuth: []
+      summary: List all actors with optional query parameters 'limit' and 'offset'
+      tags:
+      - actors
+    post:
+      consumes:
+      - application/json
+      description: Create a new actor
+      operationId: create-actor
+      parameters:
+      - description: Actor object that needs to be created
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_app_entrypoint_http.createActorRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_app_entrypoint_http.createActorResponseBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+      security:
+      - BasicAuth: []
+      summary: Create a new actor
+      tags:
+      - actors
+  /actors/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an actor by path parameter 'id'
+      operationId: delete-actor
+      parameters:
+      - description: Actors`s id that needs to be deleted
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_app_entrypoint_http.deleteActorResponseBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+      security:
+      - BasicAuth: []
+      summary: Delete an actor by path parameter 'id'
+      tags:
+      - actors
+    patch:
+      consumes:
+      - application/json
+      description: Update fully or partially an actor by path parameter 'id'
+      operationId: update-actor
+      parameters:
+      - description: Actors`s id that needs to be updated
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Actor object with values that will be updated
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_app_entrypoint_http.updateActorRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_app_entrypoint_http.updateActorResponseBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+      security:
+      - BasicAuth: []
+      summary: Update fully or partially an actor by path parameter 'id'
+      tags:
+      - actors
+  /films:
+    get:
+      description: List all films with the possibility of sorting via 'sort' parameter
+        by 'title' and/or 'rating' and/or 'release-date' and/or with 'limit' and/or
+        'offset' parameters
+      operationId: list-films
+      parameters:
+      - description: An optional query parameter 'sort' that indicates how films should
+          be sorted. By default 'sort' = 'rating:desc'. Expected as `title:asc,release-date:desc,rating:desc`
+          in any order of necessary parameters
+        in: query
+        name: sort
+        type: string
+      - description: An optional query parameter 'limit' that limits total number
+          of returned films. By default 'limit' = 100
+        in: query
+        name: limit
+        type: integer
+      - description: An optional query parameter 'offset' that indicates how many
+          records should be skipped while listing films. By default 'offset' = 0
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_app_entrypoint_http.listFilmsResponseBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+      security:
+      - BasicAuth: []
+      summary: List all films with optional 'sort', 'limit', 'offset' query parameters
+      tags:
+      - films
+    post:
+      consumes:
+      - application/json
+      description: Create a new film
+      operationId: create-film
+      parameters:
+      - description: Film object that needs to be created
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_app_entrypoint_http.createFilmRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_app_entrypoint_http.createFilmResponseBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+      security:
+      - BasicAuth: []
+      summary: Create a new film
+      tags:
+      - films
+  /films/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a film by path parameter 'id'
+      operationId: delete-film
+      parameters:
+      - description: Film`s id that needs to be deleted
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_app_entrypoint_http.deleteFilmResponseBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+      security:
+      - BasicAuth: []
+      summary: Delete a film by path parameter 'id'
+      tags:
+      - films
+    patch:
+      consumes:
+      - application/json
+      description: Update fully or partially a film by path parameter 'id'
+      operationId: update-film
+      parameters:
+      - description: Films`s id that needs to be updated
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Film object with values that will be updated
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/internal_app_entrypoint_http.updateFilmRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_app_entrypoint_http.updateFilmResponseBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+      security:
+      - BasicAuth: []
+      summary: Update fully or partially a film by path parameter 'id'
+      tags:
+      - films
+  /films/searches:
+    get:
+      description: |-
+        Search films by film title or/and actor name with optional 'limit' and 'offset' query parameters.
+        If 'film-title' and 'actor-name' are empty, than non-empty list of films with max length = 'limit' will be returned
+      operationId: search-films
+      parameters:
+      - description: An optional query parameter 'film-title'
+        in: query
+        name: film-title
+        type: string
+      - description: An optional query parameter 'actor-name'
+        in: query
+        name: actor-name
+        type: string
+      - description: An optional query parameter 'limit' that limits total number
+          of returned films. By default 'limit' = 100
+        in: query
+        name: limit
+        type: integer
+      - description: An optional query parameter 'offset' that indicates how many
+          records should be skipped while listing films. By default 'offset' = 0
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_app_entrypoint_http.searchFilmsResponseBody'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_vaberof_vk-internship-task_pkg_http_protocols_apiv1.Response'
+      security:
+      - BasicAuth: []
+      summary: Search films by film`s title or/and actor`s name with optional 'limit'
+        and 'offset' query parameters
+      tags:
+      - films
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

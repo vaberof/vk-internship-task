@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/go-playground/validator/v10"
+	httpSwagger "github.com/swaggo/http-swagger"
 	"github.com/vaberof/vk-internship-task/internal/app/entrypoint/http/middleware/auth"
 	"github.com/vaberof/vk-internship-task/internal/domain"
 	authservice "github.com/vaberof/vk-internship-task/internal/service/auth"
@@ -29,10 +30,10 @@ func NewHandler(actorService domain.ActorService, filmService domain.FilmService
 func (h *Handler) InitRoutes(mux *http.ServeMux) *http.ServeMux {
 	// ====== Actors routes ======
 
-	mux.Handle("GET /api/v1/actors", auth.AuthenticationMiddleware(h.authService, auth.AuthorizationMiddleware([]user.UserRole{user.RoleUser, user.RoleAdmin}, h.ListActorsHandler())))
 	mux.Handle("POST /api/v1/actors", auth.AuthenticationMiddleware(h.authService, auth.AuthorizationMiddleware([]user.UserRole{user.RoleAdmin}, h.CreateActorHandler())))
 	mux.Handle("PATCH /api/v1/actors/{id}", auth.AuthenticationMiddleware(h.authService, auth.AuthorizationMiddleware([]user.UserRole{user.RoleAdmin}, h.UpdateActorHandler())))
 	mux.Handle("DELETE /api/v1/actors/{id}", auth.AuthenticationMiddleware(h.authService, auth.AuthorizationMiddleware([]user.UserRole{user.RoleAdmin}, h.DeleteActorHandler())))
+	mux.Handle("GET /api/v1/actors", auth.AuthenticationMiddleware(h.authService, auth.AuthorizationMiddleware([]user.UserRole{user.RoleUser, user.RoleAdmin}, h.ListActorsHandler())))
 
 	// ====== End of Actors routes ======
 
@@ -45,6 +46,10 @@ func (h *Handler) InitRoutes(mux *http.ServeMux) *http.ServeMux {
 	mux.Handle("GET /api/v1/films/searches", auth.AuthenticationMiddleware(h.authService, auth.AuthorizationMiddleware([]user.UserRole{user.RoleUser, user.RoleAdmin}, h.SearchFilmsHandler())))
 
 	// ====== End of Films routes ======
+
+	mux.Handle("GET /swagger/", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8000/swagger/doc.json"),
+	))
 
 	return mux
 }

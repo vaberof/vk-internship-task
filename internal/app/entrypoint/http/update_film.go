@@ -20,14 +20,30 @@ type updateFilmRequestBody struct {
 }
 
 type updateFilmResponseBody struct {
-	Id          int64    `json:"id"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	ReleaseDate string   `json:"release_date"`
-	Rating      uint8    `json:"rating"`
-	Actors      []*actor `json:"actors"`
+	Id          int64        `json:"id"`
+	Title       string       `json:"title"`
+	Description string       `json:"description"`
+	ReleaseDate string       `json:"release_date"`
+	Rating      uint8        `json:"rating"`
+	Actors      []*filmActor `json:"actors"`
 }
 
+//	@Summary		Update fully or partially a film by path parameter 'id'
+//	@Security		BasicAuth
+//	@Tags			films
+//	@Description	Update fully or partially a film by path parameter 'id'
+//	@ID				update-film
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		integer					true	"Films`s id that needs to be updated"
+//	@Param			input	body		updateFilmRequestBody	true	"Film object with values that will be updated"
+//	@Success		200		{object}	updateFilmResponseBody
+//	@Failure		400		{object}	apiv1.Response
+//	@Failure		401		{object}	apiv1.Response
+//	@Failure		403		{object}	apiv1.Response
+//	@Failure		404		{object}	apiv1.Response
+//	@Failure		500		{object}	apiv1.Response
+//	@Router			/films/{id} [patch]
 func (h *Handler) UpdateFilmHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
 		var updateFilmReqBody updateFilmRequestBody
@@ -111,7 +127,7 @@ func (h *Handler) UpdateFilmHandler() http.HandlerFunc {
 			Description: domainFilm.Description.String(),
 			ReleaseDate: domainFilm.ReleaseDate.Time().Format(time.DateOnly),
 			Rating:      domainFilm.Rating.Uint8(),
-			Actors:      buildActors(domainFilm.Actors),
+			Actors:      buildFilmActors(domainFilm.Actors),
 		})
 
 		views.RenderJSON(rw, http.StatusOK, apiv1.Success(payload))

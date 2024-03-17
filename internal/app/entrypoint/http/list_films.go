@@ -26,6 +26,21 @@ type listFilmsResponseBody struct {
 	Films []*film `json:"films"`
 }
 
+// @Summary		List all films with optional 'sort', 'limit', 'offset' query parameters
+// @Security		BasicAuth
+// @Tags			films
+// @Description	List all films with the possibility of sorting via 'sort' parameter by 'title' and/or 'rating' and/or 'release-date' and/or with 'limit' and/or 'offset' parameters
+// @ID				list-films
+// @Produce		json
+// @Param			sort	query		string	false	"An optional query parameter 'sort' that indicates how films should be sorted. By default 'sort' = 'rating:desc'. Expected as `title:asc,release-date:desc,rating:desc` in any order of necessary parameters"
+// @Param			limit	query		integer	false	"An optional query parameter 'limit' that limits total number of returned films. By default 'limit' = 100"
+// @Param			offset	query		integer	false	"An optional query parameter 'offset' that indicates how many records should be skipped while listing films. By default 'offset' = 0"
+// @Success		200		{object}	listFilmsResponseBody
+// @Failure		400		{object}	apiv1.Response
+// @Failure		401		{object}	apiv1.Response
+// @Failure		403		{object}	apiv1.Response
+// @Failure		500		{object}	apiv1.Response
+// @Router			/films [get]
 func (h *Handler) ListFilmsHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
 		var limit, offset int
@@ -109,7 +124,7 @@ func getSortParams(sortParams string) (titleOrder string, releaseDateOrder strin
 		}
 	}
 
-	// sortParams expect as 'title:asc,release-date:desc,rating:desc'
+	// sortParams expected as 'title:asc,release-date:desc,rating:desc'
 
 	splitSortParams := strings.Split(sortParams, ",")
 

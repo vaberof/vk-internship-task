@@ -15,6 +15,21 @@ type deleteActorResponseBody struct {
 	Message string `json:"message"`
 }
 
+//	@Summary		Delete an actor by path parameter 'id'
+//	@Security		BasicAuth
+//	@Tags			actors
+//	@Description	Delete an actor by path parameter 'id'
+//	@ID				delete-actor
+//	@Accept			json
+//	@Produce		json
+//	@Param			id	path		integer	true	"Actors`s id that needs to be deleted"
+//	@Success		200	{object}	deleteActorResponseBody
+//	@Failure		400	{object}	apiv1.Response
+//	@Failure		401	{object}	apiv1.Response
+//	@Failure		403	{object}	apiv1.Response
+//	@Failure		404	{object}	apiv1.Response
+//	@Failure		500	{object}	apiv1.Response
+//	@Router			/actors/{id} [delete]
 func (h *Handler) DeleteActorHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
 		actorIdPathParam := request.PathValue("id")

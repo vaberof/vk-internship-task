@@ -15,17 +15,33 @@ import (
 type updateActorRequestBody struct {
 	Name      *string `json:"name,omitempty" validate:"omitempty,max=100"`
 	Sex       *uint8  `json:"sex,omitempty" validate:"omitempty,oneof=0 1 2 9"`
-	BirthDate *string `json:"birthdate,omitempty"`
+	BirthDate *string `json:"birthdate,omitempty" example:"2006-01-02"`
 }
 
 type updateActorResponseBody struct {
-	Id        int64   `json:"id"`
-	Name      string  `json:"name"`
-	Sex       uint8   `json:"sex"`
-	BirthDate string  `json:"birthdate"`
-	Films     []*film `json:"films"`
+	Id        int64        `json:"id"`
+	Name      string       `json:"name"`
+	Sex       uint8        `json:"sex"`
+	BirthDate string       `json:"birthdate"`
+	Films     []*actorFilm `json:"films"`
 }
 
+//	@Summary		Update fully or partially an actor by path parameter 'id'
+//	@Security		BasicAuth
+//	@Tags			actors
+//	@Description	Update fully or partially an actor by path parameter 'id'
+//	@ID				update-actor
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		integer					true	"Actors`s id that needs to be updated"
+//	@Param			input	body		updateActorRequestBody	true	"Actor object with values that will be updated"
+//	@Success		200		{object}	updateActorResponseBody
+//	@Failure		400		{object}	apiv1.Response
+//	@Failure		401		{object}	apiv1.Response
+//	@Failure		403		{object}	apiv1.Response
+//	@Failure		404		{object}	apiv1.Response
+//	@Failure		500		{object}	apiv1.Response
+//	@Router			/actors/{id} [patch]
 func (h *Handler) UpdateActorHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
 		var updateActorReqBody updateActorRequestBody
@@ -101,7 +117,7 @@ func (h *Handler) UpdateActorHandler() http.HandlerFunc {
 			Name:      domainActor.Name.String(),
 			Sex:       domainActor.Sex.Uint8(),
 			BirthDate: domainActor.BirthDate.Time().Format(time.DateOnly),
-			Films:     buildFilms(domainActor.Films),
+			Films:     buildActorFilms(domainActor.Films),
 		})
 
 		views.RenderJSON(rw, http.StatusOK, apiv1.Success(payload))

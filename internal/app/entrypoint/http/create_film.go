@@ -14,20 +14,35 @@ import (
 type createFilmRequestBody struct {
 	Title       string  `json:"title" validate:"required,min=1,max=150"`
 	Description string  `json:"description,omitempty" validate:"max=1000"`
-	ReleaseDate string  `json:"release_date" validate:"required"`
+	ReleaseDate string  `json:"release_date" validate:"required" example:"2006-01-02"`
 	Rating      uint8   `json:"rating" validate:"required,numeric,min=0,max=10"`
-	ActorIds    []int64 `json:"actor_ids" validate:"required,gt=0,dive,numeric"`
+	ActorIds    []int64 `json:"actor_ids" validate:"required,gt=0,dive,numeric" example:"[1,2,3]"`
 }
 
 type createFilmResponseBody struct {
-	Id          int64    `json:"id"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	ReleaseDate string   `json:"release_date"`
-	Rating      uint8    `json:"rating"`
-	Actors      []*actor `json:"actors"`
+	Id          int64        `json:"id"`
+	Title       string       `json:"title"`
+	Description string       `json:"description"`
+	ReleaseDate string       `json:"release_date"`
+	Rating      uint8        `json:"rating"`
+	Actors      []*filmActor `json:"actors"`
 }
 
+// @Summary		Create a new film
+// @Security		BasicAuth
+// @Tags			films
+// @Description	Create a new film
+// @ID				create-film
+// @Accept			json
+// @Produce		json
+// @Param			input	body		createFilmRequestBody	true	"Film object that needs to be created"
+// @Success		200		{object}	createFilmResponseBody
+// @Failure		400		{object}	apiv1.Response
+// @Failure		401		{object}	apiv1.Response
+// @Failure		403		{object}	apiv1.Response
+// @Failure		404		{object}	apiv1.Response
+// @Failure		500		{object}	apiv1.Response
+// @Router			/films [post]
 func (h *Handler) CreateFilmHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
 		var createFilmReqBody createFilmRequestBody
@@ -80,7 +95,7 @@ func (h *Handler) CreateFilmHandler() http.HandlerFunc {
 			Description: domainFilm.Description.String(),
 			ReleaseDate: domainFilm.ReleaseDate.Time().Format(time.DateOnly),
 			Rating:      domainFilm.Rating.Uint8(),
-			Actors:      buildActors(domainFilm.Actors),
+			Actors:      buildFilmActors(domainFilm.Actors),
 		})
 
 		views.RenderJSON(rw, http.StatusOK, apiv1.Success(payload))

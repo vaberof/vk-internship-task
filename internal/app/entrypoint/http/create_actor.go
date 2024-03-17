@@ -13,17 +13,31 @@ import (
 type createActorRequestBody struct {
 	Name      string `json:"name" validate:"required,max=100"`
 	Sex       uint8  `json:"sex" validate:"required,oneof=0 1 2 9"`
-	BirthDate string `json:"birthdate" validate:"required"`
+	BirthDate string `json:"birthdate" validate:"required" example:"2006-01-02"`
 }
 
 type createActorResponseBody struct {
-	Id        int64   `json:"id"`
-	Name      string  `json:"name"`
-	Sex       uint8   `json:"sex"`
-	BirthDate string  `json:"birthdate"`
-	Films     []*film `json:"films"`
+	Id        int64        `json:"id"`
+	Name      string       `json:"name"`
+	Sex       uint8        `json:"sex"`
+	BirthDate string       `json:"birthdate"`
+	Films     []*actorFilm `json:"films"`
 }
 
+// @Summary		Create a new actor
+// @Security		BasicAuth
+// @Tags			actors
+// @Description	Create a new actor
+// @ID				create-actor
+// @Accept			json
+// @Produce		json
+// @Param			input	body		createActorRequestBody	true	"Actor object that needs to be created"
+// @Success		200		{object}	createActorResponseBody
+// @Failure		400		{object}	apiv1.Response
+// @Failure		401		{object}	apiv1.Response
+// @Failure		403		{object}	apiv1.Response
+// @Failure		500		{object}	apiv1.Response
+// @Router			/actors [post]
 func (h *Handler) CreateActorHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
 		var createActorReqBody createActorRequestBody
@@ -69,7 +83,7 @@ func (h *Handler) CreateActorHandler() http.HandlerFunc {
 			Name:      domainActor.Name.String(),
 			Sex:       domainActor.Sex.Uint8(),
 			BirthDate: domainActor.BirthDate.Time().Format(time.DateOnly),
-			Films:     buildFilms(domainActor.Films),
+			Films:     buildActorFilms(domainActor.Films),
 		})
 
 		views.RenderJSON(rw, http.StatusOK, apiv1.Success(payload))

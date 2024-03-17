@@ -9,14 +9,28 @@ import (
 )
 
 const (
-	defaultActorsLimit  = 100
-	defaultActorsOffset = 0
+	defaultListActorsLimit = 100
+	defaultListOffset      = 0
 )
 
 type listActorsResponseBody struct {
 	Actors []*actor `json:"actors"`
 }
 
+// @Summary		List all actors with optional query parameters 'limit' and 'offset'
+// @Security		BasicAuth
+// @Tags			actors
+// @Description	List all actors with optional query parameters 'limit' and 'offset'
+// @ID				list-actors
+// @Produce		json
+// @Param			limit	query		integer	false	"An optional query parameter 'limit' that limits total number of returned actors. By default 'limit' = 100"
+// @Param			offset	query		integer	false	"An optional query parameter 'offset' that indicates how many records should be skipped while listing actors. By default 'offset' = 0"
+// @Success		200		{object}	listActorsResponseBody
+// @Failure		400		{object}	apiv1.Response
+// @Failure		401		{object}	apiv1.Response
+// @Failure		403		{object}	apiv1.Response
+// @Failure		500		{object}	apiv1.Response
+// @Router			/actors [get]
 func (h *Handler) ListActorsHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
 		var limit, offset int
@@ -25,7 +39,7 @@ func (h *Handler) ListActorsHandler() http.HandlerFunc {
 		limitStr := request.URL.Query().Get("limit")
 
 		if limitStr == "" {
-			limit = defaultActorsLimit
+			limit = defaultListActorsLimit
 		} else {
 			limit, err = strconv.Atoi(limitStr)
 			if err != nil {
@@ -43,7 +57,7 @@ func (h *Handler) ListActorsHandler() http.HandlerFunc {
 		offsetStr := request.URL.Query().Get("offset")
 
 		if offsetStr == "" {
-			offset = defaultActorsOffset
+			offset = defaultListOffset
 		} else {
 			offset, err = strconv.Atoi(offsetStr)
 			if err != nil {

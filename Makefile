@@ -46,3 +46,6 @@ migrate.up:
 
 migrate.down:
 	migrate -path $(MIGRATIONS_PATH) -database "$(DB_URL)" down
+
+swagger.gen:
+	swag init --parseDependency --parseInternal -g ./cmd/filmlibrary/main.go -o ./cmd/filmlibrary/docs

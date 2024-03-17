@@ -23,6 +23,23 @@ type searchFilmsResponseBody struct {
 	Films []*film `json:"films"`
 }
 
+//	@Summary		Search films by film`s title or/and actor`s name with optional 'limit' and 'offset' query parameters
+//	@Security		BasicAuth
+//	@Tags			films
+//	@Description	Search films by film title or/and actor name with optional 'limit' and 'offset' query parameters.
+//	@Description	If 'film-title' and 'actor-name' are empty, than non-empty list of films with max length = 'limit' will be returned
+//	@ID				search-films
+//	@Produce		json
+//	@Param			film-title	query		string	false	"An optional query parameter 'film-title'"
+//	@Param			actor-name	query		string	false	"An optional query parameter 'actor-name'"
+//	@Param			limit		query		integer	false	"An optional query parameter 'limit' that limits total number of returned films. By default 'limit' = 100"
+//	@Param			offset		query		integer	false	"An optional query parameter 'offset' that indicates how many records should be skipped while listing films. By default 'offset' = 0"
+//	@Success		200			{object}	searchFilmsResponseBody
+//	@Failure		400			{object}	apiv1.Response
+//	@Failure		401			{object}	apiv1.Response
+//	@Failure		403			{object}	apiv1.Response
+//	@Failure		500			{object}	apiv1.Response
+//	@Router			/films/searches [get]
 func (h *Handler) SearchFilmsHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
 		var limit, offset int
