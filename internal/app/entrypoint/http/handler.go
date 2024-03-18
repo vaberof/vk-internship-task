@@ -36,8 +36,7 @@ func NewHandler(actorService domain.ActorService, filmService domain.FilmService
 func (h *Handler) InitRoutes(mux *http.ServeMux) *http.ServeMux {
 	// ====== Actors routes ======
 
-	mux.Handle("POST /api/v1/actors", auth.AuthenticationMiddleware(h.authService,
-		auth.AuthorizationMiddleware([]user.UserRole{user.RoleAdmin}, h.CreateActorHandler())))
+	mux.Handle("POST /api/v1/actors", auth.AuthenticationMiddleware(h.authService, auth.AuthorizationMiddleware([]user.UserRole{user.RoleAdmin}, h.CreateActorHandler())))
 	mux.Handle("PATCH /api/v1/actors/{id}", auth.AuthenticationMiddleware(h.authService, auth.AuthorizationMiddleware([]user.UserRole{user.RoleAdmin}, h.UpdateActorHandler())))
 	mux.Handle("DELETE /api/v1/actors/{id}", auth.AuthenticationMiddleware(h.authService, auth.AuthorizationMiddleware([]user.UserRole{user.RoleAdmin}, h.DeleteActorHandler())))
 	mux.Handle("GET /api/v1/actors", auth.AuthenticationMiddleware(h.authService, auth.AuthorizationMiddleware([]user.UserRole{user.RoleUser, user.RoleAdmin}, h.ListActorsHandler())))

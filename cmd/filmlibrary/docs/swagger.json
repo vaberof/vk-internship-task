@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API Server for Film Library Application",
+        "description": "API Server for Film Library Application\nAccess to API:\nUser #1 email: user@example.com password: asdf1234 role: user.\nUser #2\temail: admin@example.com password: asdf1234 role: admin",
         "title": "Film Library API",
         "contact": {},
         "version": "1.0"

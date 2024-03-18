@@ -1028,7 +1028,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Film Library API",
-	Description:      "API Server for Film Library Application",
+	Description:      "API Server for Film Library Application\nAccess to API:\nUser #1 email: user@example.com password: asdf1234 role: user.\nUser #2\temail: admin@example.com password: asdf1234 role: admin",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

@@ -28,11 +28,14 @@ var environmentVariablesPath = flag.String("env.vars.file", "not-found.env", "Pa
 //	@title			Film Library API
 //	@version		1.0
 //	@description	API Server for Film Library Application
+//	@description	Access to API:
+//	@description	User #1 email: user@example.com password: asdf1234 role: user.
+//	@description	User #2	email: admin@example.com password: asdf1234 role: admin
 
 //	@host		localhost:8000
 //	@BasePath	/api/v1
 
-// @securityDefinitions.basic	BasicAuth
+//	@securityDefinitions.basic	BasicAuth
 func main() {
 	flag.Parse()
 	if err := loadEnvironmentVariables(); err != nil {
