@@ -119,7 +119,7 @@ func TestCreateError(t *testing.T) {
 			existsExpErr: nil,
 		},
 		{
-			name: "err_any",
+			name: "err_other",
 			in: in{
 				Title:       filmTitle2,
 				Description: filmDescription2,
@@ -282,7 +282,7 @@ func TestUpdateError(t *testing.T) {
 			areActorsExistsExpErr: nil,
 		},
 		{
-			name: "err_any",
+			name: "err_other",
 			in: in{
 				Id:          filmId3,
 				Title:       &filmTitle3,
@@ -369,7 +369,7 @@ func TestDeleteError(t *testing.T) {
 			existsExpErr: nil,
 		},
 		{
-			name: "err_film_not_found",
+			name: "err_other",
 			in: in{
 				Id: filmId2,
 			},

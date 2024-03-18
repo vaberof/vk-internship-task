@@ -152,7 +152,7 @@ func TestUpdateError(t *testing.T) {
 		existsExpErr error
 	}{
 		{
-			name: "err_not_found",
+			name: "err_actor_not_found",
 			in: in{
 				Id:        actorId1,
 				Name:      &actorName1,
@@ -165,7 +165,7 @@ func TestUpdateError(t *testing.T) {
 			existsExpErr: nil,
 		},
 		{
-			name: "err_any",
+			name: "err_other",
 			in: in{
 				Id:        actorId2,
 				Name:      &actorName2,
@@ -226,7 +226,7 @@ func TestDeleteError(t *testing.T) {
 		existsExpErr error
 	}{
 		{
-			name:         "err_not_found",
+			name:         "err_actor_not_found",
 			in:           domain.ActorId(1),
 			out:          nil,
 			deleteExpErr: domain.ErrActorNotFound,
@@ -234,7 +234,7 @@ func TestDeleteError(t *testing.T) {
 			existsExpErr: nil,
 		},
 		{
-			name:         "err_any",
+			name:         "err_other",
 			in:           domain.ActorId(2),
 			out:          nil,
 			deleteExpErr: fmt.Errorf("failed to delete an actor: %w", errors.New("database is down")),

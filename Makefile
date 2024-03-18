@@ -50,7 +50,13 @@ migrate.down:
 swagger.gen:
 	swag init --parseDependency --parseInternal -g ./cmd/filmlibrary/main.go -o ./cmd/filmlibrary/docs
 
-mock.gen: mock.actor_storage.gen mock.film_storage.gen
+tests.run:
+	go test ./internal/domain/tests/...
+
+tests.run.verbose:
+	go test -v ./internal/domain/tests/...
+
+mock.gen: mock.actor_storage.gen mock.film_storage.gen mock.user_finder.gen mock.user_storage.gen
 
 mock.actor_storage.gen:
 	mockgen -source=internal/domain/actor_storage.go \
@@ -59,3 +65,11 @@ mock.actor_storage.gen:
 mock.film_storage.gen:
 	mockgen -source=internal/domain/film_storage.go \
 	-destination=internal/domain/mocks/mock_film_storage.go
+
+mock.user_finder.gen:
+	mockgen -source=internal/service/auth/user_finder.go \
+	-destination=internal/service/auth/mocks/mock_user_finder.go
+
+mock.user_storage.gen:
+	mockgen -source=internal/service/user/user_storage.go \
+	-destination=internal/service/user/mocks/mock_user_storage.go
