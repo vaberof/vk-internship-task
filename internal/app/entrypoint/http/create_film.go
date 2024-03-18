@@ -7,6 +7,7 @@ import (
 	"github.com/vaberof/vk-internship-task/internal/app/entrypoint/http/views"
 	"github.com/vaberof/vk-internship-task/internal/domain"
 	"github.com/vaberof/vk-internship-task/pkg/http/protocols/apiv1"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -16,7 +17,7 @@ type createFilmRequestBody struct {
 	Description string  `json:"description,omitempty" validate:"max=1000"`
 	ReleaseDate string  `json:"release_date" validate:"required" example:"2006-01-02"`
 	Rating      uint8   `json:"rating" validate:"required,numeric,min=0,max=10"`
-	ActorIds    []int64 `json:"actor_ids" validate:"required,gt=0,dive,numeric" example:"[1,2,3]"`
+	ActorIds    []int64 `json:"actor_ids" validate:"required,gt=0,dive,numeric" example:"1,2,3"`
 }
 
 type createFilmResponseBody struct {
@@ -45,6 +46,10 @@ type createFilmResponseBody struct {
 // @Router			/films [post]
 func (h *Handler) CreateFilmHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
+		const handlerName = "CreateFilmHandler"
+
+		log := h.logger.With(slog.String("handlerName", handlerName))
+
 		var createFilmReqBody createFilmRequestBody
 		err := json.NewDecoder(request.Body).Decode(&createFilmReqBody)
 		if err != nil {
@@ -57,6 +62,8 @@ func (h *Handler) CreateFilmHandler() http.HandlerFunc {
 		if err != nil {
 			errors, ok := err.(validator.ValidationErrors)
 			if !ok {
+				log.Error("failed to type cast validator.ValidationErrors", "error", err.Error())
+
 				views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageFilmInternalServerError, apiv1.ErrorDescription{"error": "failed to get validation errors"}))
 			} else {
 				views.RenderJSON(rw, http.StatusBadRequest, apiv1.Error(apiv1.CodeBadRequest, ErrMessageFilmInvalidRequestBody, apiv1.ErrorDescription{"error": errors.Error()}))
@@ -81,8 +88,10 @@ func (h *Handler) CreateFilmHandler() http.HandlerFunc {
 		)
 		if err != nil {
 			if errors.Is(err, domain.ErrActorsNotFound) {
-				views.RenderJSON(rw, http.StatusNotFound, apiv1.Error(apiv1.CodeNotFound, ErrMessageActorNotFound, apiv1.ErrorDescription{"error": err.Error()}))
+				views.RenderJSON(rw, http.StatusNotFound, apiv1.Error(apiv1.CodeNotFound, ErrMessageFilmActorsNotFound, apiv1.ErrorDescription{"error": err.Error()}))
 			} else {
+				log.Error("failed to create a film", "error", err.Error())
+
 				views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageFilmInternalServerError, apiv1.ErrorDescription{"error": err.Error()}))
 			}
 

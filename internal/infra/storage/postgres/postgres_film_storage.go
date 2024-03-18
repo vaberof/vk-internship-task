@@ -7,7 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/vaberof/vk-internship-task/internal/domain"
 	"github.com/vaberof/vk-internship-task/internal/infra/storage"
-	"log"
 	"strings"
 	"time"
 )
@@ -55,16 +54,9 @@ func (s *PgFilmStorage) Create(title domain.FilmTitle, description domain.FilmDe
 		return nil, fmt.Errorf("failed to create a film: %w", err)
 	}
 
-	queryFilmsActors := `
-						INSERT INTO films_actors(film_id, actor_id)
-						VALUES ($1, $2)
-`
-
-	for _, actorId := range actorIds {
-		_, err = tx.Exec(queryFilmsActors, film.Id, actorId)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create a film: failed to insert values to 'films_actors' table %w", err)
-		}
+	err = s.createFilmActors(tx, film.Id, actorIds)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create a film: %w", err)
 	}
 
 	filmActors, err := s.getFilmActors(tx, film.Id)
@@ -80,7 +72,7 @@ func (s *PgFilmStorage) Create(title domain.FilmTitle, description domain.FilmDe
 	return buildDomainFilm(&film), nil
 }
 
-func (s *PgFilmStorage) Update(id domain.FilmId, title *domain.FilmTitle, description *domain.FilmDescription, releaseDate *domain.FilmReleaseDate, rating *domain.FilmRating) (*domain.Film, error) {
+func (s *PgFilmStorage) Update(id domain.FilmId, title *domain.FilmTitle, description *domain.FilmDescription, releaseDate *domain.FilmReleaseDate, rating *domain.FilmRating, actorIds *[]domain.ActorId) (*domain.Film, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("failed to start transaction while updating film: %w", err)
@@ -129,6 +121,18 @@ func (s *PgFilmStorage) Update(id domain.FilmId, title *domain.FilmTitle, descri
 		return nil, fmt.Errorf("failed to update a film: %w", err)
 	}
 
+	if actorIds != nil {
+		err = s.deleteFilmActors(tx, film.Id)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update a film: %w", err)
+		}
+
+		err = s.createFilmActors(tx, film.Id, *actorIds)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update a film: %w", err)
+		}
+	}
+
 	filmActors, err := s.getFilmActors(tx, film.Id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update a film: %w", err)
@@ -173,7 +177,6 @@ func (s *PgFilmStorage) ListWithSort(titleOrder, releaseDateOrder, ratingOrder s
 			INNER JOIN actors AS a ON a.id = fa.actor_id
 ` + orderParam
 
-	log.Println("query:", query)
 	var films []*PgFilm
 
 	rows, err := s.db.Query(query)
@@ -299,6 +302,32 @@ func (s *PgFilmStorage) IsExists(id domain.FilmId) (bool, error) {
 		return false, fmt.Errorf("failed to check whether film exists or not: %w", err)
 	}
 	return true, nil
+}
+
+func (s *PgFilmStorage) createFilmActors(tx *sql.Tx, filmId int64, actorIds []domain.ActorId) error {
+	queryInsertFilmsActors := `
+						INSERT INTO films_actors(film_id, actor_id)
+						VALUES ($1, $2)
+`
+	for _, actorId := range actorIds {
+		_, err := tx.Exec(queryInsertFilmsActors, filmId, actorId)
+		if err != nil {
+			return fmt.Errorf("failed to insert values to 'films_actors' table %w", err)
+		}
+	}
+	return nil
+}
+
+func (s *PgFilmStorage) deleteFilmActors(tx *sql.Tx, filmId int64) error {
+	queryDeleteFilmsActors := `
+						DELETE FROM films_actors WHERE film_id=$1
+`
+	tx.Exec(queryDeleteFilmsActors, filmId)
+	_, err := tx.Exec(queryDeleteFilmsActors, filmId)
+	if err != nil {
+		return fmt.Errorf("failed to delete values from 'films_actors' table %w", err)
+	}
+	return nil
 }
 
 func (s *PgFilmStorage) getFilmActors(tx *sql.Tx, filmId int64) ([]*PgActor, error) {

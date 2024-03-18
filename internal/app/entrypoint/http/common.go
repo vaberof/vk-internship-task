@@ -1,118 +1,49 @@
 package http
 
 import (
-	"github.com/vaberof/vk-internship-task/internal/domain"
-	"time"
+	"bytes"
+	"fmt"
+	"github.com/go-playground/validator/v10"
+	"strings"
 )
 
-type film struct {
-	Id          int64        `json:"id"`
-	Title       string       `json:"title"`
-	Description string       `json:"description"`
-	ReleaseDate string       `json:"release_date"`
-	Rating      uint8        `json:"rating"`
-	Actors      []*filmActor `json:"actors,omitempty"`
-}
+type validationErrors []error
 
-type filmActor struct {
-	Id        int64  `json:"id"`
-	Name      string `json:"name"`
-	Sex       uint8  `json:"sex"`
-	BirthDate string `json:"birthdate"`
-}
+func (ve validationErrors) Error() string {
+	buff := bytes.NewBufferString("")
 
-type actor struct {
-	Id        int64        `json:"id"`
-	Name      string       `json:"name"`
-	Sex       uint8        `json:"sex"`
-	BirthDate string       `json:"birthdate"`
-	Films     []*actorFilm `json:"films,omitempty"`
-}
+	for i := 0; i < len(ve); i++ {
 
-type actorFilm struct {
-	Id          int64  `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	ReleaseDate string `json:"release_date"`
-	Rating      uint8  `json:"rating"`
-}
-
-func buildFilms(domainFilms []*domain.Film) []*film {
-	films := make([]*film, len(domainFilms))
-	for i := range domainFilms {
-		films[i] = buildFilm(domainFilms[i])
+		buff.WriteString(ve[i].Error())
+		buff.WriteString("\n")
 	}
-	return films
+
+	return strings.TrimSpace(buff.String())
 }
 
-func buildFilm(domainFilm *domain.Film) *film {
-	return &film{
-		Id:          domainFilm.Id.Int64(),
-		Title:       domainFilm.Title.String(),
-		Description: domainFilm.Description.String(),
-		ReleaseDate: domainFilm.ReleaseDate.Time().Format(time.DateOnly),
-		Rating:      domainFilm.Rating.Uint8(),
-		Actors:      buildFilmActors(domainFilm.Actors),
-	}
-}
+func validateRequestBody(err error) validationErrors {
+	var verr validationErrors
 
-func buildFilmActors(domainActors []*domain.Actor) []*filmActor {
-	filmActors := make([]*filmActor, len(domainActors))
-	for i := range domainActors {
-		filmActors[i] = buildFilmActor(domainActors[i])
+	for _, err := range err.(validator.ValidationErrors) {
+		var e error
+		switch err.Tag() {
+		case "required":
+			e = fmt.Errorf("Field '%s' must be nonempty", err.Field())
+		case "min":
+			e = fmt.Errorf("Field '%s' must be equal or greater than '%v' characters long", err.Field(), err.Param())
+		case "max":
+			e = fmt.Errorf("Field '%s' must be lower or equal than '%v' characters long", err.Field(), err.Param())
+		case "gt":
+			e = fmt.Errorf("Field '%s' must be greater than '%v'", err.Field(), err.Param())
+		case "oneof":
+			e = fmt.Errorf("Field '%s' must have one of acceptable values: '%v'", err.Field(), err.Param())
+		case "numeric":
+			e = fmt.Errorf("Field '%s' must contain numeric values", err.Field())
+		default:
+			e = fmt.Errorf("Field '%s': '%v' must satisfy '%s' '%v' criteria", err.Field(), err.Value(), err.Tag(), err.Param())
+		}
+		verr = append(verr, e)
 	}
-	return filmActors
-}
 
-func buildFilmActor(domainActor *domain.Actor) *filmActor {
-	return &filmActor{
-		Id:        domainActor.Id.Int64(),
-		Name:      domainActor.Name.String(),
-		Sex:       domainActor.Sex.Uint8(),
-		BirthDate: domainActor.BirthDate.Time().Format(time.DateOnly),
-	}
-}
-
-func buildDomainActorIds(actorIds []int64) []domain.ActorId {
-	domainActorIds := make([]domain.ActorId, len(actorIds))
-	for i := range actorIds {
-		domainActorIds[i] = domain.ActorId(actorIds[i])
-	}
-	return domainActorIds
-}
-
-func buildActors(domainActors []*domain.Actor) []*actor {
-	actors := make([]*actor, len(domainActors))
-	for i := range domainActors {
-		actors[i] = buildActor(domainActors[i])
-	}
-	return actors
-}
-
-func buildActor(domainActor *domain.Actor) *actor {
-	return &actor{
-		Id:        domainActor.Id.Int64(),
-		Name:      domainActor.Name.String(),
-		Sex:       domainActor.Sex.Uint8(),
-		BirthDate: domainActor.BirthDate.Time().Format(time.DateOnly),
-		Films:     buildActorFilms(domainActor.Films),
-	}
-}
-
-func buildActorFilms(domainFilms []*domain.Film) []*actorFilm {
-	actorFilms := make([]*actorFilm, len(domainFilms))
-	for i := range domainFilms {
-		actorFilms[i] = buildActorFilm(domainFilms[i])
-	}
-	return actorFilms
-}
-
-func buildActorFilm(domainFilm *domain.Film) *actorFilm {
-	return &actorFilm{
-		Id:          domainFilm.Id.Int64(),
-		Title:       domainFilm.Title.String(),
-		Description: domainFilm.Description.String(),
-		ReleaseDate: domainFilm.ReleaseDate.Time().Format(time.DateOnly),
-		Rating:      domainFilm.Rating.Uint8(),
-	}
+	return verr
 }

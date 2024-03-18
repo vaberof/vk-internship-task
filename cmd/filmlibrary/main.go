@@ -32,7 +32,7 @@ var environmentVariablesPath = flag.String("env.vars.file", "not-found.env", "Pa
 //	@host		localhost:8000
 //	@BasePath	/api/v1
 
-//	@securityDefinitions.basic	BasicAuth
+// @securityDefinitions.basic	BasicAuth
 func main() {
 	flag.Parse()
 	if err := loadEnvironmentVariables(); err != nil {
@@ -62,7 +62,7 @@ func main() {
 
 	httpRequestBodyValidator := validator.New()
 
-	httpHandler := http.NewHandler(actorService, filmService, authService, httpRequestBodyValidator)
+	httpHandler := http.NewHandler(actorService, filmService, authService, httpRequestBodyValidator, logger)
 
 	appServer := httpserver.New(&appConfig.Server, logger)
 

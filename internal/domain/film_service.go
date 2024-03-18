@@ -13,7 +13,7 @@ var (
 
 type FilmService interface {
 	Create(title FilmTitle, description FilmDescription, releaseDate FilmReleaseDate, rating FilmRating, actorIds []ActorId) (*Film, error)
-	Update(id FilmId, title *FilmTitle, description *FilmDescription, releaseDate *FilmReleaseDate, rating *FilmRating) (*Film, error)
+	Update(id FilmId, title *FilmTitle, description *FilmDescription, releaseDate *FilmReleaseDate, rating *FilmRating, actorIds *[]ActorId) (*Film, error)
 	Delete(id FilmId) error
 	ListWithSort(titleOrder, releaseDateOrder, ratingOrder string, limit, offset int) ([]*Film, error)
 	SearchByFilters(title FilmTitle, actorName ActorName, limit, offset int) ([]*Film, error)
@@ -67,7 +67,7 @@ func (f *filmServiceImpl) Create(title FilmTitle, description FilmDescription, r
 	return domainFilm, nil
 }
 
-func (f *filmServiceImpl) Update(id FilmId, title *FilmTitle, description *FilmDescription, releaseDate *FilmReleaseDate, rating *FilmRating) (*Film, error) {
+func (f *filmServiceImpl) Update(id FilmId, title *FilmTitle, description *FilmDescription, releaseDate *FilmReleaseDate, rating *FilmRating, actorIds *[]ActorId) (*Film, error) {
 	const operation = "Update"
 
 	log := f.logger.With(
@@ -87,7 +87,7 @@ func (f *filmServiceImpl) Update(id FilmId, title *FilmTitle, description *FilmD
 		return nil, ErrFilmNotFound
 	}
 
-	domainFilm, err := f.filmStorage.Update(id, title, description, releaseDate, rating)
+	domainFilm, err := f.filmStorage.Update(id, title, description, releaseDate, rating, actorIds)
 	if err != nil {
 		log.Error("failed to update a film", "error", err)
 		return nil, err

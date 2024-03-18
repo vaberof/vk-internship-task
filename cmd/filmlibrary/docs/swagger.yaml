@@ -73,6 +73,34 @@ definitions:
         type: integer
     type: object
   internal_app_entrypoint_http.createFilmRequestBody:
+    properties:
+      actor_ids:
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+      description:
+        maxLength: 1000
+        type: string
+      rating:
+        maximum: 10
+        minimum: 0
+        type: integer
+      release_date:
+        example: "2006-01-02"
+        type: string
+      title:
+        maxLength: 150
+        minLength: 1
+        type: string
+    required:
+    - actor_ids
+    - rating
+    - release_date
+    - title
     type: object
   internal_app_entrypoint_http.createFilmResponseBody:
     properties:
@@ -183,6 +211,14 @@ definitions:
     type: object
   internal_app_entrypoint_http.updateFilmRequestBody:
     properties:
+      actor_ids:
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
       description:
         maxLength: 1000
         type: string
@@ -191,6 +227,7 @@ definitions:
         minimum: 0
         type: integer
       release_date:
+        example: "2006-01-02"
         type: string
       title:
         maxLength: 150

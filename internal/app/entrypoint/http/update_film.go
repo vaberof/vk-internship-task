@@ -7,16 +7,18 @@ import (
 	"github.com/vaberof/vk-internship-task/internal/app/entrypoint/http/views"
 	"github.com/vaberof/vk-internship-task/internal/domain"
 	"github.com/vaberof/vk-internship-task/pkg/http/protocols/apiv1"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
 )
 
 type updateFilmRequestBody struct {
-	Title       *string `json:"title,omitempty" validate:"omitempty,min=1,max=150"`
-	Description *string `json:"description,omitempty" validate:"omitempty,max=1000"`
-	ReleaseDate *string `json:"release_date,omitempty"`
-	Rating      *uint8  `json:"rating,omitempty" validate:"omitempty,numeric,min=0,max=10"`
+	Title       *string  `json:"title,omitempty" validate:"omitempty,min=1,max=150"`
+	Description *string  `json:"description,omitempty" validate:"omitempty,max=1000"`
+	ReleaseDate *string  `json:"release_date,omitempty" example:"2006-01-02"`
+	Rating      *uint8   `json:"rating,omitempty" validate:"omitempty,numeric,min=0,max=10"`
+	ActorIds    *[]int64 `json:"actor_ids,omitempty" validate:"omitempty,dive,numeric" example:"1,2,3"`
 }
 
 type updateFilmResponseBody struct {
@@ -28,24 +30,28 @@ type updateFilmResponseBody struct {
 	Actors      []*filmActor `json:"actors"`
 }
 
-//	@Summary		Update fully or partially a film by path parameter 'id'
-//	@Security		BasicAuth
-//	@Tags			films
-//	@Description	Update fully or partially a film by path parameter 'id'
-//	@ID				update-film
-//	@Accept			json
-//	@Produce		json
-//	@Param			id		path		integer					true	"Films`s id that needs to be updated"
-//	@Param			input	body		updateFilmRequestBody	true	"Film object with values that will be updated"
-//	@Success		200		{object}	updateFilmResponseBody
-//	@Failure		400		{object}	apiv1.Response
-//	@Failure		401		{object}	apiv1.Response
-//	@Failure		403		{object}	apiv1.Response
-//	@Failure		404		{object}	apiv1.Response
-//	@Failure		500		{object}	apiv1.Response
-//	@Router			/films/{id} [patch]
+// @Summary		Update fully or partially a film by path parameter 'id'
+// @Security		BasicAuth
+// @Tags			films
+// @Description	Update fully or partially a film by path parameter 'id'
+// @ID				update-film
+// @Accept			json
+// @Produce		json
+// @Param			id		path		integer					true	"Films`s id that needs to be updated"
+// @Param			input	body		updateFilmRequestBody	true	"Film object with values that will be updated"
+// @Success		200		{object}	updateFilmResponseBody
+// @Failure		400		{object}	apiv1.Response
+// @Failure		401		{object}	apiv1.Response
+// @Failure		403		{object}	apiv1.Response
+// @Failure		404		{object}	apiv1.Response
+// @Failure		500		{object}	apiv1.Response
+// @Router			/films/{id} [patch]
 func (h *Handler) UpdateFilmHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
+		const handlerName = "UpdateFilmHandler"
+
+		log := h.logger.With(slog.String("handlerName", handlerName))
+
 		var updateFilmReqBody updateFilmRequestBody
 		err := json.NewDecoder(request.Body).Decode(&updateFilmReqBody)
 		if err != nil {
@@ -58,6 +64,8 @@ func (h *Handler) UpdateFilmHandler() http.HandlerFunc {
 		if err != nil {
 			errors, ok := err.(validator.ValidationErrors)
 			if !ok {
+				log.Error("failed to type cast validator.ValidationErrors", "error", err.Error())
+
 				views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageFilmInternalServerError, apiv1.ErrorDescription{"error": "failed to get validation errors"}))
 			} else {
 				views.RenderJSON(rw, http.StatusBadRequest, apiv1.Error(apiv1.CodeBadRequest, ErrMessageFilmInvalidRequestBody, apiv1.ErrorDescription{"error": errors.Error()}))
@@ -81,6 +89,8 @@ func (h *Handler) UpdateFilmHandler() http.HandlerFunc {
 		filmIdPathParam := request.PathValue("id")
 		filmId, err := strconv.Atoi(filmIdPathParam)
 		if err != nil {
+			log.Error("failed to convert 'id' parameter", "id", filmIdPathParam, "error", err.Error())
+
 			views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageFilmInternalServerError, apiv1.ErrorDescription{"error": err.Error()}))
 
 			return
@@ -104,17 +114,26 @@ func (h *Handler) UpdateFilmHandler() http.HandlerFunc {
 			domainFilmRating = &convDomainFilmRating
 		}
 
+		var domainActorIds *[]domain.ActorId
+		if updateFilmReqBody.ActorIds != nil {
+			convDomainActorIds := buildDomainActorIds(*updateFilmReqBody.ActorIds)
+			domainActorIds = &convDomainActorIds
+		}
+
 		domainFilm, err := h.filmService.Update(
 			domain.FilmId(filmId),
 			domainFilmTitle,
 			domainFilmDescription,
 			domainReleaseDate,
 			domainFilmRating,
+			domainActorIds,
 		)
 		if err != nil {
 			if errors.Is(err, domain.ErrFilmNotFound) {
 				views.RenderJSON(rw, http.StatusNotFound, apiv1.Error(apiv1.CodeNotFound, ErrMessageFilmNotFound, apiv1.ErrorDescription{"error": err.Error()}))
 			} else {
+				log.Error("failed to update film", "id", filmId, "error", err.Error())
+
 				views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageFilmInternalServerError, apiv1.ErrorDescription{"error": err.Error()}))
 			}
 

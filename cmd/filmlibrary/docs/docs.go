@@ -751,7 +751,44 @@ const docTemplate = `{
             }
         },
         "internal_app_entrypoint_http.createFilmRequestBody": {
-            "type": "object"
+            "type": "object",
+            "required": [
+                "actor_ids",
+                "rating",
+                "release_date",
+                "title"
+            ],
+            "properties": {
+                "actor_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        1,
+                        2,
+                        3
+                    ]
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 1000
+                },
+                "rating": {
+                    "type": "integer",
+                    "maximum": 10,
+                    "minimum": 0
+                },
+                "release_date": {
+                    "type": "string",
+                    "example": "2006-01-02"
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 150,
+                    "minLength": 1
+                }
+            }
         },
         "internal_app_entrypoint_http.createFilmResponseBody": {
             "type": "object",
@@ -919,6 +956,17 @@ const docTemplate = `{
         "internal_app_entrypoint_http.updateFilmRequestBody": {
             "type": "object",
             "properties": {
+                "actor_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        1,
+                        2,
+                        3
+                    ]
+                },
                 "description": {
                     "type": "string",
                     "maxLength": 1000
@@ -929,7 +977,8 @@ const docTemplate = `{
                     "minimum": 0
                 },
                 "release_date": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "2006-01-02"
                 },
                 "title": {
                     "type": "string",

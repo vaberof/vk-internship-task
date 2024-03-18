@@ -6,13 +6,14 @@ import (
 	"github.com/vaberof/vk-internship-task/internal/app/entrypoint/http/views"
 	"github.com/vaberof/vk-internship-task/internal/domain"
 	"github.com/vaberof/vk-internship-task/pkg/http/protocols/apiv1"
+	"log/slog"
 	"net/http"
 	"time"
 )
 
 type createActorRequestBody struct {
 	Name      string `json:"name" validate:"required,max=100"`
-	Sex       uint8  `json:"sex" validate:"required,oneof=0 1 2 9"`
+	Sex       *uint8 `json:"sex" validate:"required,oneof=0 1 2 9"`
 	BirthDate string `json:"birthdate" validate:"required" example:"2006-01-02"`
 }
 
@@ -40,6 +41,10 @@ type createActorResponseBody struct {
 // @Router			/actors [post]
 func (h *Handler) CreateActorHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
+		const handlerName = "CreateActorHandler"
+
+		log := h.logger.With(slog.String("handlerName", handlerName))
+
 		var createActorReqBody createActorRequestBody
 		err := json.NewDecoder(request.Body).Decode(&createActorReqBody)
 		if err != nil {
@@ -52,9 +57,12 @@ func (h *Handler) CreateActorHandler() http.HandlerFunc {
 		if err != nil {
 			errors, ok := err.(validator.ValidationErrors)
 			if !ok {
+				log.Error("failed to type cast validator.ValidationErrors", "error", err.Error())
+
 				views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageActorInternalServerError, apiv1.ErrorDescription{"error": "failed to get validation errors"}))
 			} else {
-				views.RenderJSON(rw, http.StatusBadRequest, apiv1.Error(apiv1.CodeBadRequest, ErrMessageActorInvalidRequestBody, apiv1.ErrorDescription{"error": errors.Error()}))
+				errs := validateRequestBody(errors)
+				views.RenderJSON(rw, http.StatusBadRequest, apiv1.Error(apiv1.CodeBadRequest, ErrMessageActorInvalidRequestBody, apiv1.ErrorDescription{"error": errs.Error()}))
 			}
 
 			return
@@ -69,10 +77,12 @@ func (h *Handler) CreateActorHandler() http.HandlerFunc {
 
 		domainActor, err := h.actorService.Create(
 			domain.ActorName(createActorReqBody.Name),
-			domain.ActorSex(createActorReqBody.Sex),
+			domain.ActorSex(*createActorReqBody.Sex),
 			domain.ActorBirthDate(birthdate),
 		)
 		if err != nil {
+			log.Error("failed to create an actor", "error", err.Error())
+
 			views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageActorInternalServerError, apiv1.ErrorDescription{"error": err.Error()}))
 
 			return

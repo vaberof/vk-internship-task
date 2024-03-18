@@ -7,6 +7,7 @@ import (
 	"github.com/vaberof/vk-internship-task/internal/app/entrypoint/http/views"
 	"github.com/vaberof/vk-internship-task/internal/domain"
 	"github.com/vaberof/vk-internship-task/pkg/http/protocols/apiv1"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -26,24 +27,28 @@ type updateActorResponseBody struct {
 	Films     []*actorFilm `json:"films"`
 }
 
-//	@Summary		Update fully or partially an actor by path parameter 'id'
-//	@Security		BasicAuth
-//	@Tags			actors
-//	@Description	Update fully or partially an actor by path parameter 'id'
-//	@ID				update-actor
-//	@Accept			json
-//	@Produce		json
-//	@Param			id		path		integer					true	"Actors`s id that needs to be updated"
-//	@Param			input	body		updateActorRequestBody	true	"Actor object with values that will be updated"
-//	@Success		200		{object}	updateActorResponseBody
-//	@Failure		400		{object}	apiv1.Response
-//	@Failure		401		{object}	apiv1.Response
-//	@Failure		403		{object}	apiv1.Response
-//	@Failure		404		{object}	apiv1.Response
-//	@Failure		500		{object}	apiv1.Response
-//	@Router			/actors/{id} [patch]
+// @Summary		Update fully or partially an actor by path parameter 'id'
+// @Security		BasicAuth
+// @Tags			actors
+// @Description	Update fully or partially an actor by path parameter 'id'
+// @ID				update-actor
+// @Accept			json
+// @Produce		json
+// @Param			id		path		integer					true	"Actors`s id that needs to be updated"
+// @Param			input	body		updateActorRequestBody	true	"Actor object with values that will be updated"
+// @Success		200		{object}	updateActorResponseBody
+// @Failure		400		{object}	apiv1.Response
+// @Failure		401		{object}	apiv1.Response
+// @Failure		403		{object}	apiv1.Response
+// @Failure		404		{object}	apiv1.Response
+// @Failure		500		{object}	apiv1.Response
+// @Router			/actors/{id} [patch]
 func (h *Handler) UpdateActorHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
+		const handlerName = "UpdateActorHandler"
+
+		log := h.logger.With(slog.String("handlerName", handlerName))
+
 		var updateActorReqBody updateActorRequestBody
 		err := json.NewDecoder(request.Body).Decode(&updateActorReqBody)
 		if err != nil {
@@ -56,6 +61,8 @@ func (h *Handler) UpdateActorHandler() http.HandlerFunc {
 		if err != nil {
 			errors, ok := err.(validator.ValidationErrors)
 			if !ok {
+				log.Error("failed to type cast validator.ValidationErrors", "error", err.Error())
+
 				views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageActorInternalServerError, apiv1.ErrorDescription{"error": "failed to get validation errors"}))
 			} else {
 				views.RenderJSON(rw, http.StatusBadRequest, apiv1.Error(apiv1.CodeBadRequest, ErrMessageActorInvalidRequestBody, apiv1.ErrorDescription{"error": errors.Error()}))
@@ -79,6 +86,8 @@ func (h *Handler) UpdateActorHandler() http.HandlerFunc {
 		actorIdPathParam := request.PathValue("id")
 		actorId, err := strconv.Atoi(actorIdPathParam)
 		if err != nil {
+			log.Error("failed to convert 'id' parameter", "id", actorIdPathParam, "error", err.Error())
+
 			views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageActorInternalServerError, apiv1.ErrorDescription{"error": err.Error()}))
 
 			return
@@ -106,6 +115,8 @@ func (h *Handler) UpdateActorHandler() http.HandlerFunc {
 			if errors.Is(err, domain.ErrActorNotFound) {
 				views.RenderJSON(rw, http.StatusNotFound, apiv1.Error(apiv1.CodeNotFound, ErrMessageActorNotFound, apiv1.ErrorDescription{"error": err.Error()}))
 			} else {
+				log.Error("failed to update actor", "id", actorId, "error", err.Error())
+
 				views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageActorInternalServerError, apiv1.ErrorDescription{"error": err.Error()}))
 			}
 

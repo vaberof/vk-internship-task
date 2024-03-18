@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/vaberof/vk-internship-task/internal/app/entrypoint/http/views"
 	"github.com/vaberof/vk-internship-task/pkg/http/protocols/apiv1"
+	"log/slog"
 	"net/http"
 	"strconv"
 )
@@ -33,6 +34,10 @@ type listActorsResponseBody struct {
 // @Router			/actors [get]
 func (h *Handler) ListActorsHandler() http.HandlerFunc {
 	return func(rw http.ResponseWriter, request *http.Request) {
+		const handlerName = "ListActorsHandler"
+
+		log := h.logger.With(slog.String("handlerName", handlerName))
+
 		var limit, offset int
 		var err error
 
@@ -43,6 +48,8 @@ func (h *Handler) ListActorsHandler() http.HandlerFunc {
 		} else {
 			limit, err = strconv.Atoi(limitStr)
 			if err != nil {
+				log.Error("failed to convert 'limit' parameter", "limit", limitStr, "error", err.Error())
+
 				views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageActorInternalServerError, apiv1.ErrorDescription{"error": err.Error()}))
 
 				return
@@ -61,6 +68,8 @@ func (h *Handler) ListActorsHandler() http.HandlerFunc {
 		} else {
 			offset, err = strconv.Atoi(offsetStr)
 			if err != nil {
+				log.Error("failed to convert 'offset' parameter", "offset", offsetStr, "error", err.Error())
+
 				views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageActorInternalServerError, apiv1.ErrorDescription{"error": err.Error()}))
 
 				return
@@ -74,6 +83,8 @@ func (h *Handler) ListActorsHandler() http.HandlerFunc {
 
 		domainActors, err := h.actorService.List(limit, offset)
 		if err != nil {
+			log.Error("failed to list actors", "error", err.Error())
+
 			views.RenderJSON(rw, http.StatusInternalServerError, apiv1.Error(apiv1.CodeInternalError, ErrMessageActorInternalServerError, apiv1.ErrorDescription{"error": err.Error()}))
 
 			return
