@@ -51,10 +51,18 @@ swagger.gen:
 	swag init --parseDependency --parseInternal -g ./cmd/filmlibrary/main.go -o ./cmd/filmlibrary/docs
 
 tests.run:
-	go test ./internal/domain/tests/...
+	go test ./internal/domain/... ./internal/service...
 
 tests.run.verbose:
-	go test -v ./internal/domain/tests/...
+	go test -v \
+		./internal/domain/... \
+		./internal/service...
+
+tests.cover.report: tests.cover.run
+	go tool cover -html=coverage.out -o coverage.html
+
+tests.cover.run:
+	go test -coverprofile coverage.out ./internal/domain/... ./internal/service...
 
 mock.gen: mock.actor_storage.gen mock.film_storage.gen mock.user_finder.gen mock.user_storage.gen
 
