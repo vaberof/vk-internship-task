@@ -87,7 +87,7 @@ func (h *Handler) CreateFilmHandler() http.HandlerFunc {
 			buildDomainActorIds(createFilmReqBody.ActorIds),
 		)
 		if err != nil {
-			if errors.Is(err, domain.ErrActorsNotFound) {
+			if errors.Is(err, domain.ErrFilmActorsNotFound) {
 				views.RenderJSON(rw, http.StatusNotFound, apiv1.Error(apiv1.CodeNotFound, ErrMessageFilmActorsNotFound, apiv1.ErrorDescription{"error": err.Error()}))
 			} else {
 				log.Error("failed to create a film", "error", err.Error())

@@ -8,8 +8,7 @@ import (
 )
 
 var (
-	ErrActorNotFound  = errors.New("actor not found")
-	ErrActorsNotFound = errors.New("actors not found")
+	ErrActorNotFound = errors.New("actor not found")
 )
 
 type ActorService interface {

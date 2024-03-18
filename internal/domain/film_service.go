@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	ErrFilmNotFound = errors.New("film not found")
+	ErrFilmNotFound       = errors.New("film not found")
+	ErrFilmActorsNotFound = errors.New("actors not found")
 )
 
 type FilmService interface {
@@ -53,7 +54,7 @@ func (f *filmServiceImpl) Create(title FilmTitle, description FilmDescription, r
 	}
 	if !exists {
 		log.Warn("failed to create a film", "error", fmt.Sprintf("actors with ids '%v' not found", actorIds))
-		return nil, ErrActorsNotFound
+		return nil, ErrFilmActorsNotFound
 	}
 
 	domainFilm, err := f.filmStorage.Create(title, description, releaseDate, rating, actorIds)
@@ -85,6 +86,18 @@ func (f *filmServiceImpl) Update(id FilmId, title *FilmTitle, description *FilmD
 	if !exists {
 		log.Warn("failed to update a film", "error", fmt.Sprintf("film with id '%d' not found", id.Int64()))
 		return nil, ErrFilmNotFound
+	}
+
+	if actorIds != nil {
+		exists, err = f.actorStorage.AreExists(*actorIds)
+		if err != nil {
+			log.Error("failed to update a film", "error", err)
+			return nil, err
+		}
+		if !exists {
+			log.Warn("failed to update a film", "error", fmt.Sprintf("actors with ids '%v' not found", actorIds))
+			return nil, ErrFilmActorsNotFound
+		}
 	}
 
 	domainFilm, err := f.filmStorage.Update(id, title, description, releaseDate, rating, actorIds)

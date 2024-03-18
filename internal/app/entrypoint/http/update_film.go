@@ -131,6 +131,8 @@ func (h *Handler) UpdateFilmHandler() http.HandlerFunc {
 		if err != nil {
 			if errors.Is(err, domain.ErrFilmNotFound) {
 				views.RenderJSON(rw, http.StatusNotFound, apiv1.Error(apiv1.CodeNotFound, ErrMessageFilmNotFound, apiv1.ErrorDescription{"error": err.Error()}))
+			} else if errors.Is(err, domain.ErrFilmActorsNotFound) {
+				views.RenderJSON(rw, http.StatusNotFound, apiv1.Error(apiv1.CodeNotFound, ErrMessageFilmActorsNotFound, apiv1.ErrorDescription{"error": err.Error()}))
 			} else {
 				log.Error("failed to update film", "id", filmId, "error", err.Error())
 
